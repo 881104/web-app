@@ -7,8 +7,10 @@
 <h1>Index</h1>
 
 <p>
-    <a asp-action="Create" class="btn btn-primary">新增資料</a>
+    <a class="btn btn-primary"asp-action="Create">新增資料</a>
 </p>
+
+
 <table class="table table-hover">
     <thead>
         <tr>
@@ -52,7 +54,8 @@
                     <a href="https://www.google.com.tw/maps/search/@(item.Address)" target="_blank" class="btn btn-danger">地圖</a>
             </td>
             <td>
-                @Html.ActionLink("編輯", "Edit", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("編輯", "Edit", new { /* id=item.PrimaryKey */ },new{@class="btn btn-warning"})
+
                 @Html.ActionLink("詳細資料", "Details", new { /* id=item.PrimaryKey */ }) |
                 @Html.ActionLink("刪除", "Delete", new { /* id=item.PrimaryKey */ })
             </td>
