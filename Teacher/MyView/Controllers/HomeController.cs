@@ -47,6 +47,34 @@ namespace MyView.Controllers
         }
 
 
+        public IActionResult IndexList(string id)
+        {
+            var list = GetData();
+
+            VMNightMarket vmN = new VMNightMarket()
+            {
+                //左側導覽列
+                //取得所有夜市資料的編號與名稱
+                NightMarkets = list,
+                //右側顯示資料內容主畫面
+                //取得某一筆夜市資料的詳細內容
+                NightMarket = list.Where(list => list.Id == id).FirstOrDefault()
+            };
+
+            //左側導覽列
+            //取得所有夜市資料的編號與名稱
+            //ViewData["nm"] = list;
+
+            //右側顯示資料內容主畫面
+            //取得某一筆夜市資料的詳細內容
+            //Lambda寫法
+            //var result = list.Where(list => list.Id == id).FirstOrDefault();
+
+            return View(vmN);
+
+        }
+
+
         public IActionResult Index()
         {
 
