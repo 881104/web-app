@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using MyModel_DBFirst.Models;
 
 namespace MyModel_DBFirst.Controllers
@@ -19,8 +21,11 @@ namespace MyModel_DBFirst.Controllers
             //Linq
             //var result = from s in db.tStudent
             //             select s;
+            //var result = db.tStudent.ToList();  //select * from tStudents
 
-            var result = db.tStudent.ToList();  //select * from tStudents
+            //5.5.1 修改 Index Action
+            var result = db.tStudent.Include(t => t.Department).ToList();
+
 
             //將查詢結果傳給View
             return View(result);
@@ -30,7 +35,9 @@ namespace MyModel_DBFirst.Controllers
         //4.3.2 建立Create View
         public IActionResult Create()
         {
-
+            //5.5.3 修改 Create Action
+            ViewData["Dept"] = new SelectList(db.Department, "DeptID", "DeptName"); //建立給下拉選單的資料來源
+            
             return View();
         }
 
@@ -82,6 +89,8 @@ namespace MyModel_DBFirst.Controllers
                 return NotFound(); //如果找不到資料，回傳404 Not Found
             }
 
+            //5.5.5 修改 Edit Action
+            ViewData["Dept"] = new SelectList(db.Department, "DeptID", "DeptName"); //建立給下拉選單的資料來源
 
             return View(result);
 
@@ -107,5 +116,27 @@ namespace MyModel_DBFirst.Controllers
             return View(student);
 
         }
+
+
+        //4.5.1 撰寫Delete Action程式碼
+        //4.5.4 執行Delete功能測試
+        [HttpPost,ValidateAntiForgeryToken]
+        public IActionResult Delete(string id)
+        {
+            //delete from tStudents where fStuId = id;
+
+            var result = db.tStudent.Find(id);
+
+            if (result == null)
+            {
+                return NotFound(); //如果找不到資料，回傳404 Not Found
+            }
+
+            db.tStudent.Remove(result); //將找到的資料從模型資料裡移除
+            db.SaveChanges(); //回寫資料庫，執行 DELETE FROM tStudents WHERE fStuId = id;
+
+            return RedirectToAction("Index"); //刪除完成後，導向到Index Action
+        }
+
     }
 }
