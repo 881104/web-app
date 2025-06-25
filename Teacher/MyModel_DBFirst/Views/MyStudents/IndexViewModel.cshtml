@@ -21,61 +21,70 @@
 
 	</div>
 	<div class="col-9">
-		<h2 class="text-center">學生資料</h2>
+		<h2 class="text-center">@ViewData["DeptName"] 學生資料</h2>
 		<p class="text-end">
-			<a asp-action="Create" class="btn btn-primary">新增學生資料</a>
+			@* //5.9.1 修改IndexViewModel View上Create的超鏈結進行參數傳遞 *@
+			<a asp-action="Create" asp-route-deptid="@ViewBag.DeptID" class="btn btn-primary">新增學生資料</a>
 		</p>
-		<table class="table">
-			<thead>
-				<tr>
-					<th>
-						@Html.DisplayNameFor(model => model.Students.FirstOrDefault().fStuId)
-					</th>
-					<th>
-						@Html.DisplayNameFor(model => model.Students.FirstOrDefault().fName)
-					</th>
-					<th>
-						@Html.DisplayNameFor(model => model.Students.FirstOrDefault().fEmail)
-					</th>
-					<th>
-						@Html.DisplayNameFor(model => model.Students.FirstOrDefault().fScore)
-					</th>
 
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				@foreach (var item in Model.Students)
-				{
+		@if (Model.Students.Count() == 0)
+		{
+			<hr />
+			<h3 class="text-center text-danger">沒有任何學生資料</h3>
+		}
+		else
+		{
+			<table class="table">
+				<thead>
 					<tr>
-						<td>
-							@Html.DisplayFor(modelItem => item.fStuId)
-						</td>
-						<td>
-							@Html.DisplayFor(modelItem => item.fName)
-						</td>
-						<td>
-							@Html.DisplayFor(modelItem => item.fEmail)
-						</td>
-						<td>
-							@Html.DisplayFor(modelItem => item.fScore)
-						</td>
+						<th>
+							@Html.DisplayNameFor(model => model.Students.FirstOrDefault().fStuId)
+						</th>
+						<th>
+							@Html.DisplayNameFor(model => model.Students.FirstOrDefault().fName)
+						</th>
+						<th>
+							@Html.DisplayNameFor(model => model.Students.FirstOrDefault().fEmail)
+						</th>
+						<th>
+							@Html.DisplayNameFor(model => model.Students.FirstOrDefault().fScore)
+						</th>
 
-						<td class="d-flex">
-							<a asp-action="Edit" asp-route-id="@item.fStuId" class="btn btn-warning btn-sm">編輯</a>
-
-						
-							<form asp-action="Delete">
-								<input type="hidden" value="@item.fStuId" name="id" />
-								<input type="submit" value="刪除" class="btn btn-danger btn-sm" onclick="return confirm('您確定要刪除此筆資料嗎?')" />
-							</form>
-						
-						</td>
+						<th></th>
 					</tr>
-				}
-			</tbody>
-		</table>
+				</thead>
+				<tbody>
+					@foreach (var item in Model.Students)
+					{
+						<tr>
+							<td>
+								@Html.DisplayFor(modelItem => item.fStuId)
+							</td>
+							<td>
+								@Html.DisplayFor(modelItem => item.fName)
+							</td>
+							<td>
+								@Html.DisplayFor(modelItem => item.fEmail)
+							</td>
+							<td>
+								@Html.DisplayFor(modelItem => item.fScore)
+							</td>
 
+							<td class="d-flex">
+								<a asp-action="Edit" asp-route-id="@item.fStuId" class="btn btn-warning btn-sm">編輯</a>
+
+
+								<form asp-action="Delete">
+									<input type="hidden" value="@item.fStuId" name="id" />
+									<input type="submit" value="刪除" class="btn btn-danger btn-sm" onclick="return confirm('您確定要刪除此筆資料嗎?')" />
+								</form>
+
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
 
 	</div>
 </div>
