@@ -1,4 +1,4 @@
-namespace CSharp.Models
+namespace NorthwindStore.Models
 {
     public class ErrorViewModel
     {

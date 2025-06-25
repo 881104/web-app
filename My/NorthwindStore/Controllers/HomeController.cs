@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using CSharp.Models;
 using Microsoft.AspNetCore.Mvc;
+using NorthwindStore.Models;
 
-namespace CSharp.Controllers
+namespace NorthwindStore.Controllers
 {
     public class HomeController : Controller
     {
@@ -22,8 +22,6 @@ namespace CSharp.Controllers
         {
             return View();
         }
-
-        
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
