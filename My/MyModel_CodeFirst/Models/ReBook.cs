@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MyModel_CodeFirst.Models
 {
     //1.1.4 設計ReBook類別的各屬性，包括名稱、資料類型及其相關的驗證規則及顯示名稱(Display)
-    public class ReBook
+    public partial class ReBook
     {
         //屬性封裝
         [Display(Name = "編號")]
@@ -31,7 +31,7 @@ namespace MyModel_CodeFirst.Models
 
         //外來建屬性
         [ForeignKey("Book")]
-        public string BookID { get; set; } = null!
+        public string BookID { get; set; } = null!;
         //1.1.5 撰寫兩個類別間的關聯屬性做為未來資料表之間的關聯
         public virtual Book? Book { get; set; } //一個ReBook只能屬於一個Book
     }

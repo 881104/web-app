@@ -22,8 +22,8 @@ namespace MyModel_CodeFirst.Models
             //1.2.6
 
             // 可在此處進行模型配置，例如設定主鍵、索引等
-            modelBuilder.Entity<Book>(E)
-                .HasKey(b => b.BookID);
+            //modelBuilder.Entity<Book>(E)
+            //    .HasKey(b => b.BookID);
             modelBuilder.Entity<ReBook>()
                 .HasKey(r => r.ReBookID);
             // 設定Book與ReBook之間的一對多關聯
