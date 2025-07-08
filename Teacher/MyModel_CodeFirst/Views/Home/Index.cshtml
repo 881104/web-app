@@ -12,9 +12,8 @@
         @foreach (var item in Model)
         {
 			a = item == Model.First() ? "active" : "";
-			
             <div class="carousel-item @a">
-                <img src="~/BookPhotos/@item.Photo" class="d-block w-100" alt="@item.Title" title="@item.Description">
+                <img src="~/BookPhotos/@item.Photo" class="d-block w-100" alt="@item.Title" title="@item.Title">
             </div>
         }
       
