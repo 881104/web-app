@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MyWebAPI.DTOs;
 using MyWebAPI.Models;
@@ -33,7 +34,7 @@ namespace MyWebAPI.Controllers
 
         // GET: api/Products
         [HttpGet()]
-        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProduct(string? cateID, string? productName ,decimal? minPrice, decimal? maxPrice, string? description  )
+        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProduct(string? cateID, string? productName, decimal? minPrice, decimal? maxPrice, string? description)
         {
             //4.1.2 使用Include()同時取得關聯資料
             //4.1.3 使用Where()改變查詢的條件並測試
@@ -98,7 +99,7 @@ namespace MyWebAPI.Controllers
                 //products = products.Where(p => p.Price >= minPrice && p.Price <= maxPrice).ToList();
                 products = products.Where(p => p.Price >= minPrice && p.Price <= maxPrice);
             }
-                
+
 
             //4.4.5 加入產品敘述關鍵字搜尋
             if (!string.IsNullOrEmpty(description))
@@ -108,7 +109,7 @@ namespace MyWebAPI.Controllers
             }
 
 
-            if(products == null || products.Count()==0)
+            if (products == null || products.Count() == 0)
             {
                 return NotFound("找不到產品資料");
             }
@@ -128,36 +129,43 @@ namespace MyWebAPI.Controllers
             string sql = "select p.ProductID, p.ProductName, p.Price, p.Description, p.Picture, p.CateID, c.CateName " +
                 " from Product as p inner join Category as c on p.CateID=c.CateID where 1=1 ";
 
-
+            List<SqlParameter> parameters = new List<SqlParameter>();
 
             if (!string.IsNullOrEmpty(cateID))
             {
-
-                sql += $" and p.CateID = '{cateID}' ";
+                //sql += $" and p.CateID = '{cateID}' ";
+                sql += " and p.CateID = @cate ";
+                parameters.Add(new SqlParameter("@cate", cateID));
             }
 
             if (!string.IsNullOrEmpty(productName))
             {
-
-                sql += $" and p.ProductName like '%{productName}%' ";
+                //sql += $" and p.ProductName like '%{productName}%' ";
+                sql += " and p.ProductName like @productName ";
+                parameters.Add(new SqlParameter("@productName", $"%{productName}%"));
             }
 
             if (minPrice.HasValue && maxPrice.HasValue)
             {
-                sql += $" and between {minPrice} and {maxPrice} ";
+                //sql += $" and between {minPrice} and {maxPrice} ";
+                sql += " and p.Price between @minPrice and @maxPrice ";
+                parameters.Add(new SqlParameter("@minPrice", minPrice));
+                parameters.Add(new SqlParameter("@maxPrice", maxPrice));
             }
 
 
             if (!string.IsNullOrEmpty(description))
             {
-                sql += $" and p.Description like '%{description}%' ";
+                //sql += $" and p.Description like '%{description}%' ";
+                sql += $" and p.Description like @description ";
+                parameters.Add(new SqlParameter("@description", $"%{description}%"));
             }
 
             //4.6.4 使用Swagger測試(這裡會發生錯誤，因為使用了合併查詢)
             //var products = await _context.Product.FromSqlRaw(sql).ToListAsync();
 
             //4.6.6 將_context.Product.FromSqlRaw(sql).ToListAsync();改為_context.ProductDTO.FromSqlRaw(sql).ToListAsync();
-            var products = await _context.ProductDTO.FromSqlRaw(sql).ToListAsync();
+            var products = await _context.ProductDTO.FromSqlRaw(sql, parameters.ToArray()).ToListAsync();
 
             if (products == null || products.Count() == 0)
             {
@@ -167,6 +175,28 @@ namespace MyWebAPI.Controllers
 
             return products;
         }
+
+        //4.8.2 在ProductsController中建立一個新的Get Action
+        //4.8.3 設置介接口為[HttpGet("fromProc/{id}")]，Action名稱可自訂，並使用ProductDTO來傳遞資料
+        [HttpGet("fromProc/{id}")]
+        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProductFromProc(string id)
+        {
+            //4.8.4 使用預存程序進行查詢(參數的傳遞請使用SqlParameter)
+            string sql = $"exec getProductWithCateName @cateID";
+
+            var cateID = new SqlParameter("@cateID", id);
+
+            var products = await _context.ProductDTO.FromSqlRaw(sql, cateID).ToListAsync();
+
+            if (products == null || products.Count() == 0)
+            {
+                return NotFound("找不到產品資料");
+            }
+
+
+            return products;
+        }
+
 
         //4.3.1 先使用Swagger測試及觀查目前Product的資料取得狀況(理解參數及介接口)
         [HttpGet("{id}")]
@@ -186,17 +216,39 @@ namespace MyWebAPI.Controllers
             return product;
         }
 
-        // PUT: api/Products/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+
+        //6.1.7 改寫ProductsController中Put Action內容
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(string id, Product product)
+        public async Task<IActionResult> PutProduct(string id, [FromForm]ProductPutDTO product)
         {
-            if (id != product.ProductID)
+            //if (id != product.ProductID)
+            //{
+            //    return BadRequest();
+            //}
+            if (id == null)
             {
                 return BadRequest();
             }
 
-            _context.Entry(product).State = EntityState.Modified;
+            var p = await _context.Product.FindAsync(id);
+            if (p == null)
+            {
+                return NotFound("查無資料");
+            }
+
+            //檢查是否有新照片上傳
+            if (product.Picture != null && product.Picture.Length != 0)
+            {
+                FileUpload(product.Picture, id);
+
+            }
+
+            p.ProductName = product.ProductName;
+            p.Price = product.Price;
+            p.Description = product.Description;
+
+
+            _context.Entry(p).State = EntityState.Modified;
 
             try
             {
@@ -214,7 +266,7 @@ namespace MyWebAPI.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(p);
         }
 
         // POST: api/Products
@@ -238,6 +290,58 @@ namespace MyWebAPI.Controllers
                     throw;
                 }
             }
+
+            return CreatedAtAction("GetProduct", new { id = product.ProductID }, product);
+        }
+
+        //5.2.4 建立一個新的Post Action，介接口設定為[HttpPost("PostWithPhoto")]，並加入上傳檔案的動作
+        [HttpPost("PostWithPhoto")]
+        public async Task<ActionResult<ProductPostDTO>> PostProductWithPhoto([FromForm] ProductPostDTO product)
+        {
+            //判斷檔案是否上傳
+            if (product.Picture == null || product.Picture.Length == 0)
+            {
+                return BadRequest("未上傳商品圖片");
+            }
+
+            string fileName = await FileUpload(product.Picture, product.ProductID);
+
+            if(fileName=="")
+            {
+                return BadRequest("上傳的檔案格式不正確，請上傳jpg、jpeg或png格式的圖片");
+            }
+
+
+            Product p = new Product
+            {
+                ProductID = product.ProductID,
+                ProductName = product.ProductName,
+                Price = product.Price,
+                Description = product.Description,
+                Picture = fileName,
+                CateID = product.CateID
+            };
+
+
+
+            //寫入資料庫
+            _context.Product.Add(p);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                if (ProductExists(product.ProductID))
+                {
+                    return Conflict();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
 
             return CreatedAtAction("GetProduct", new { id = product.ProductID }, product);
         }
@@ -277,16 +381,48 @@ namespace MyWebAPI.Controllers
                 Picture = p.Picture,
                 CateID = p.CateID,
                 CateName = p.Cate.CateName
-               
+
             };
 
             return result;
 
         }
 
+        //5.2.5 將上傳檔案寫成一個獨立的方法
+        private async Task<string> FileUpload(IFormFile Photo, string PID)
+        {
+            //判斷上傳的檔案是否為圖片格式
+            var extension = Path.GetExtension(Photo.FileName).ToLower();
+            var allowedExtension = new[] { ".jpg", ".jpeg", ".png" };
 
-         
+            if (!allowedExtension.Contains(extension))
+            {
+                return "";
+            }
 
 
-}
+            //檔案上傳的路徑
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ProductPhotos");
+
+            //確保目錄存在
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+            }
+
+            //檔案名稱(ProductID+副檔名)
+            var fileName = PID + Path.GetExtension(Photo.FileName);
+
+            var filePath = Path.Combine(uploadPath, fileName); //"/wwwroot/ProductPhotos/XXXXX.jpg";
+
+            //儲存檔案
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await Photo.CopyToAsync(stream);
+            }
+
+
+            return fileName; //回傳檔案名稱
+        }
+    }
 }
