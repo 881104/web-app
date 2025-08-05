@@ -10,6 +10,15 @@ builder.Services.AddDbContext<GuestBookContext>(options =>
 //////////////////////////////////////////
 var app = builder.Build();
 
+using(var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    
+    SeedData.Initialize(services);
+    }
+    
+
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
